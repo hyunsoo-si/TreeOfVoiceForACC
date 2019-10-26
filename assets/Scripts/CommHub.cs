@@ -71,11 +71,13 @@ public class CommHub : MonoBehaviour
 {
 
     
-    ActionPlanController m_actionPlanController;
+    public ActionPlanController m_actionPlanController;
+
     ActionPlanUpdateController m_actionPlanUpdateController;
 
-    SimpleBoidsTreeOfVoice m_boidsController;
-    BoidsRendererTreeOfVoice m_boidsRenderer;
+   // public SimpleBoidsTreeOfVoice m_boidsController;
+
+   // public BoidsRendererTreeOfVoice m_boidsRenderer;
 
     DictManager m_dictManager;
 
@@ -116,10 +118,10 @@ public class CommHub : MonoBehaviour
         //NeuroHeadSetController m_neuroHeadSetController;
 
 
-        m_actionPlanController = gameObject.GetComponent<ActionPlanController>();
+        //m_actionPlanController = gameObject.GetComponent<ActionPlanController>();
         m_actionPlanUpdateController = gameObject.GetComponent<ActionPlanUpdateController>();
-        m_boidsController = gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
-        m_boidsRenderer = gameObject.GetComponent<BoidsRendererTreeOfVoice>();
+        //m_boidsController = gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
+       // m_boidsRenderer = gameObject.GetComponent<BoidsRendererTreeOfVoice>();
 
         m_dictManager = gameObject.GetComponent<DictManager>();
         m_ledColorGenController = gameObject.GetComponent<LEDColorGenController>(); // compute Shader use

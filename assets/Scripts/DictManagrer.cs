@@ -211,7 +211,7 @@ using System.Text;
 //}//   void Deserialize()
 
 
-public class DictManager
+public class DictManager: MonoBehaviour
     
   
 {
