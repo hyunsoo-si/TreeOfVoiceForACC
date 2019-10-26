@@ -140,7 +140,7 @@ using System.Text;
 //        }
 //    }
 
-public class ActionPlanUpdateController
+public class ActionPlanUpdateController: MonoBehaviour
 
 
 {
