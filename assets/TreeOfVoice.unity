@@ -1940,11 +1940,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1304115014}
   - component: {fileID: 1304115013}
-  - component: {fileID: 1304115018}
-  - component: {fileID: 1304115017}
-  - component: {fileID: 1304115016}
-  - component: {fileID: 1304115015}
-  - component: {fileID: 1304115019}
+  - component: {fileID: 1304115020}
   m_Layer: 0
   m_Name: CommHub
   m_TagString: Untagged
@@ -1964,6 +1960,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4b27bc267cc2224e977727d73ef39a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_actionPlanController: {fileID: 601839500}
 --- !u!4 &1304115014
 Transform:
   m_ObjectHideFlags: 0
@@ -1978,99 +1975,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 50
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1304115015
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1304115012}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9289f9ce5ae5c1540a36781ee4801160, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _boids: {fileID: 598164259}
-  _instanceMaterial: {fileID: 2100000, guid: edd2a7808224ef04dace53a43dd2a8dc, type: 2}
-  _instanceMeshSphere: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
-  m_useCircleMesh: 1
-  m_scale: 1
---- !u!114 &1304115016
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1304115012}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 17263dc23bff99940b952961720c6383, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_AnimationCycle: 390
-  UseActionPlan: 1
-  Use3DMotion: 1
-  m_BoidsNum: 1000
-  MinDomainRadius: 2
-  MaxDomainRadius: 10
-  MinBoidRadius: 0.1
-  MaxBoidRadius: 0.3
-  _minSpeed: 1
-  _maxSpeed: 3
-  _speedFactor: 1
-  _scaleFactor: 1
-  _separate:
-    Radius: 0.6
-    Weight: 0.5
-  _alignment:
-    Radius: 2
-    Weight: 0.3
-  _cohesion:
-    Radius: 2
-    Weight: 0.2
-  _groundWeight:
-    FlockingWeight: 0.3
-    DivergeWeight: 0.2
-    CirculationWeight: 0.5
-  _ceilingWeight:
-    FlockingWeight: 0.2
-    ConvergeWeight: 0.3
-    CirculationWeight: 0.5
-  _groundMinHue: 0
-  _groundMaxHue: 1
-  _groundMinSaturation: 0.2
-  _groundMaxSaturation: 1
-  _groundMinValue: 0.2
-  _groundMaxValue: 1
-  _groundMinAlpha: 0.2
-  _groundMaxAlpha: 1
-  _ceilingMinHue: 0
-  _ceilingMaxHue: 1
-  _ceilingMinSaturation: 0.2
-  _ceilingMaxSaturation: 1
-  _ceilingMinValue: 0.2
-  _ceilingMaxValue: 1
-  _ceilingMinAlpha: 0.2
-  _ceilingMaxAlpha: 1
-  GroundMinCorner: {x: -10, y: 0, z: -10}
-  GroundMaxCorner: {x: 10, y: 0, z: 10}
-  CeilingMinCorner: {x: -10, y: 12, z: -10}
-  CeilingMaxCorner: {x: 10, y: 12, z: 10}
-  GroundPlaneDepth: 3
-  CeilingPlaneDepth: 3
-  RightWallMinCorner: {x: 10, y: 0, z: -10}
-  RightWallMaxCorner: {x: 10, y: 12, z: 10}
-  GroundRadius: 12
-  CeilingRadius: 12
-  CeilingInnerRadius: 1
-  numOfWalls: 2
-  numOfWallGizmos: 3
-  BoidComputeShader: {fileID: 7200000, guid: cd82e75d04265734e8c85ae89b7bdd3c, type: 3}
-  gameObjForWallTransforms:
-  - {fileID: 562297673}
-  - {fileID: 407466412}
-  - {fileID: 160945561}
---- !u!114 &1304115017
+--- !u!114 &1304115020
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2082,59 +1987,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8d053ddafa3ee447b0baffef03b09a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_actionPlanController: {fileID: 1304115018}
+  m_actionPlanController: {fileID: 601839500}
   fileName: dict.bin
---- !u!114 &1304115018
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1304115012}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b00c6f0534e2c9949a3f04af3a23e493, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_boidsController: {fileID: 598164259}
-  m_AnimationCycle: 390
-  m_contentWidth: 10000
-  m_contentHeight: 2000
-  m_scrollRectWidth: 0
-  m_scrollRectHeight: 0
-  m_canvasWidth: 0
-  m_canvasHeight: 0
-  m_myScrollRect: {fileID: 1428188483}
-  m_canvasObj: {fileID: 0}
-  m_scrollViewObj: {fileID: 0}
-  m_viewportObj: {fileID: 0}
-  m_contentObj: {fileID: 0}
-  m_contentTitleObj: {fileID: 0}
-  m_contentTimeLineObj: {fileID: 0}
-  m_contentKeysObj: {fileID: 0}
-  m_contentValuesObj: {fileID: 0}
-  m_scrollbarHorizontalObj: {fileID: 0}
-  m_scrollbarVerticalObj: {fileID: 0}
-  m_contentTimeLineClipRectObj: {fileID: 0}
-  m_contentKeysClipRectObj: {fileID: 0}
-  m_contentValuesClipRectObj: {fileID: 0}
---- !u!114 &1304115019
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1304115012}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 78b14437f2d479f42949525e4c33f83f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  IsCameraUpdated: 0
-  GroundMinCorner: {x: 0, y: 0, z: 0}
-  GroundMaxCorner: {x: 0, y: 0, z: 0}
-  CeilingMinCorner: {x: 0, y: 0, z: 0}
-  CeilingMaxCorner: {x: 0, y: 0, z: 0}
 --- !u!1 &1306796409
 GameObject:
   m_ObjectHideFlags: 0

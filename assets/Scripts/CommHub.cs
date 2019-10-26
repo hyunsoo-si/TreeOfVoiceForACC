@@ -73,9 +73,11 @@ public class CommHub : MonoBehaviour
     
     public ActionPlanController m_actionPlanController;
 
+   // public SimpleBoidsTreeOfVoice m_boidsController;
+
     ActionPlanUpdateController m_actionPlanUpdateController;
 
-   // public SimpleBoidsTreeOfVoice m_boidsController;
+  
 
    // public BoidsRendererTreeOfVoice m_boidsRenderer;
 
@@ -90,9 +92,9 @@ public class CommHub : MonoBehaviour
     LEDMasterController m_ledMasterController;
     NeuroHeadSetController m_neuroHeadSetController;
 
-    public Dictionary<String, List<SimpleBoidsTreeOfVoice.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
+    Dictionary<String, List<SimpleBoidsTreeOfVoice.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
 
-    public List<GameObject>[] m_inputFieldContainer;
+    List<GameObject>[] m_inputFieldContainer;
     
 
 
