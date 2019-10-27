@@ -48,7 +48,8 @@ using Random = UnityEngine.Random;
 public class SimpleBoidLEDColors : MonoBehaviour
 {
 
-   
+
+    SimpleBoidsTreeOfVoice _boids; // set in the inspector
 
     protected const int BLOCK_SIZE = 1024; // The number of threads in a single thread group
 
@@ -64,7 +65,38 @@ public class SimpleBoidLEDColors : MonoBehaviour
     // 보이드의 수
     public float m_BoidsNum = 1000f;
 
-   
+    public struct BoidLEDData
+    {
+        // public Vector3  WallOrigin; // the reference position of the wall (the boid reference frame) on which the boid is 
+
+        //public Vector3 EulerAngles; // the rotation of the boid reference frame
+        public Vector3 Position; //
+
+        public Vector4 Color;         // RGBA color
+        public int WallNo;      // the number of the wall whose boids defined the light sources of the branch cylinder
+                                // 0=> the core circular wall. 
+                                // 1 => the outer circular wall;
+    }
+
+    public struct BranchCylinder
+    {
+        // public Vector3  WallOrigin; // the reference position of the wall (the boid reference frame) on which the boid is 
+
+        //public Vector3 EulerAngles; // the rotation of the boid reference frame
+        public Vector3 Position; // the position of the  cylinder origin in the boid reference frame        
+        public float Height;
+
+        public float Radius; // the radius of the cylinder
+        public Vector4 Color;         // RGBA color of the cylinder; This color is a weighted sum of the colors of the neighbor
+                                      // boids of the branch cylinder which is located at Position
+
+        public int WallNo;      // the number of the wall whose boids defined the light sources of the branch cylinder
+                                // 0=> the core circular wall. 
+                                // 1 => the outer circular wall;
+    }
+
+
+
     // 컴퓨트 쉐이더
     // Mention another Component instance.
     [SerializeField] protected ComputeShader BoidLEDComputeShader;
@@ -77,739 +109,12 @@ public class SimpleBoidLEDColors : MonoBehaviour
 
     int BufferStartIndex, BufferEndIndex;
 
-    protected int KernelIdGround, KernelIdCeiling, KernelIdCountBoids;
+    protected int KernelIdLEDColor, KernelIdCeiling, KernelIdCountBoids;
 
     // for debugging
-    BoidData[] boidArray;
-    // for debugging
-    int[] boidCountArray;
-
-    int totalNumOfSimulations = 0;
-    bool m_IsGizmoDrawn = false; 
-
-    // Dictionary<Vector2, float> TimedAction = new Dictionary<Vector2, float>();
-
-    //When you create a struct object using the new operator, it gets created and the appropriate constructor is called.
-    //Unlike classes, structs can be instantiated without using the new operator. 
-    //If you do not use new, the fields will remain unassigned and the object cannot be used until all of the fields are initialized.
-
-    //public GameObject m_sceneAugGameObject = new GameObject(); 
-
-    // 시뮬레이션 공간의 센터 
-    public Vector3 RoomCenter
-    {
-        get { return (GroundMinCorner + CeilingMaxCorner) / 2f; }
-    }
-
-    // 시뮬레이션 공간의 크기
-    public Vector3 RoomSize
-    {
-        get { return CeilingMaxCorner - GroundMinCorner; }
-    }
-
-    // Transforms that represent the 5 walls
-
-    //Transform groundTransform = new Transform();
-    //The Above Causes "Inaccessible  Errors":  you shouldn't be calling the constructor for Transform or any other Component. 
-    //Transform is a component. You can't create components like that, 
-    //since they don't exist by themselves; you can create a GameObject, and add components to it.
-
-// Declare other gameobjects
-    public GameObject[] gameObjForWallTransforms;
-
-    // In the above, Your code creates only the array of type GameOjbect, but neither of its items.
-    // Basically, you need to store instances of Sample into this array.
-    //
-    // To put it simple, without any fancy LINQ etc.:
-    // Sample[] samples = new Sample[100];
-    // for (int i = 0; i<samples.Length; i++) samples[i] = new Sample();
-
-    // crete a dummy gameobject
-    private bool wallTransformsDefined = false;
-
+    BoidLEDData[] boidLEDArray;
+    
   
-    private bool IsBoidsNumSet = false;
-    
-    struct Action
-    {
-      
-        public float Time;
-        public float Value;
-        public float Weight;
-    }
-
-    Dictionary< String, List<Action> > actionPlan = new Dictionary<String, List<Action>>()
-    
-        {
-        // Choose the  mesh  of boids according to action plan
-
-        // Weight = 1 means that the current value is used during the whole time interval betweeen the two actions
-        // Weight = 0.3 means that the current value is used during the first 30% of the time interval, and afer that
-        // use the interpolated value between the current and the next value, 
-          //{ "_MeshNo", new List<Action> {  new Action() { Time = 0f, Value = 4f, Weight = 1f },
-          //                                //  new Action() { Time = 20f, Value = 2f, Weight = 1f },
-          //                               //    new Action() { Time = 50f, Value = 3f, Weight = 1f },
-          //                                //    new Action() { Time = 70f, Value = 4f, Weight = 1f },
-          //                                //     new Action() { Time =100f, Value = 5f, Weight = 1f },
-          //                                //     new Action() { Time = 110f, Value = 6f, Weight = 1f },
-          //                                       new Action() { Time = 390f, Value = 4f, Weight = 0f }
-
-          //                                    }
-          //   },
-
-
-          //{ "_Scale", new List<Action> {  new Action() { Time = 0f, Value = 0.012f, Weight = 1f },
-          //                            //      new Action() { Time = 20f, Value = 1f, Weight = 1f },
-          //                            //       new Action() { Time = 50f, Value = 0.1f, Weight = 1f },
-          //                             //       new Action() { Time = 70f, Value = 0.01f, Weight = 1f },
-                                    
-          //                              //       new Action() { Time = 100f, Value = 0.05f, Weight = 1f },
-          //                               //          new Action() { Time = 110f, Value = 0.05f, Weight = 1f },
-          //                                            new Action() { Time = 390f, Value =0.012f, Weight = 0f }
-          //                                    }
-          //   },
-
-
-             { "_BoidsNum", new List<Action> {   new Action() { Time = 0f, Value = 1500f, Weight = 0.95f },
-                                                 new Action() { Time = 30f, Value = 1500f, Weight = 1f },
-                                                  new Action() { Time = 60f, Value = 1500f, Weight = 1f },
-                                                    new Action() { Time = 100f, Value = 1500f, Weight = 1f },
-
-                                                       new Action() { Time = 140f, Value = 1500f, Weight = 0.95f },
-                                                     new Action() { Time = 200f, Value = 1500f, Weight = 1f },
-                                                      new Action() { Time = 230f, Value = 1500f, Weight = 1f },
-                                                        new Action() { Time = 260f, Value = 1500f, Weight = 1f },
-
-                                                         new Action() { Time = 300f, Value = 1500f, Weight = 1f },
-                                                            new Action() { Time = 360f, Value = 1500f, Weight = 1f },
-                                                                new Action() { Time = 390f, Value = 1500f, Weight = 1f },
-
-                                                                   
-                                              }
-             },
-
-              { "_SpeedFactor", new List<Action> { new Action() { Time = 0f, Value = 0.35f, Weight = 0.95f },
-                                                new Action() { Time = 30f, Value = 0.5f, Weight = 1f },
-                                                    new Action() { Time = 60f, Value = 0.5f, Weight = 1f },
-                                                  new Action() { Time = 100f, Value = 0.3f, Weight = 1f },
-
-                                              new Action() { Time = 140f, Value = 0.35f, Weight = 0.95f },
-                                                new Action() { Time = 200f, Value = 0.5f, Weight = 1f },
-                                                  new Action() { Time = 230f, Value = 0.5f, Weight = 1f },
-                                                    new Action() { Time = 260f, Value = 0.5f, Weight = 1f },
-
-                                               new Action() { Time = 300f, Value = 0.5f, Weight = 1f },
-                                                new Action() { Time = 360f, Value = 0.5f, Weight = 1f },
-                                                  new Action() { Time = 390f, Value = 0.5f, Weight = 1f },
-
-                                              
-                                                 }
-             },
-
-              { "_ScaleFactor", new List<Action> {  new Action() { Time = 0f, Value = 1f, Weight = 0.95f },
-                                                new Action() { Time = 30f, Value = 1f, Weight = 1f },
-                                                 new Action() { Time = 60f, Value = 1f, Weight = 1f },
-                                                  new Action() { Time = 100f, Value = 1f, Weight = 1f },
-
-                                               new Action() { Time = 140f, Value = 1f, Weight = 0.95f },
-                                                  new Action() { Time = 200f, Value = 1f, Weight = 1f },
-                                                 new Action() { Time = 230f, Value = 1f, Weight = 1f },
-                                                    new Action() { Time = 260f, Value = 1f, Weight = 1f },
-
-                                                new Action() { Time = 300f, Value = 1f, Weight = 1f },
-                                                 new Action() { Time = 360f, Value = 1f, Weight = 1f },
-                                                  new Action() { Time = 390f, Value = 1f, Weight = 1f },
-
-                                                
-                                               }
-             },
-
-              { "_SeparateRadius", new List<Action> {   new Action() { Time = 0f, Value = 2f, Weight = 0.5f },
-                                                    new Action() { Time = 30f, Value = 0.56f, Weight = 1f },
-                                                        new Action() { Time = 60f, Value = 0.98f, Weight = 1f },
-                                                            new Action() { Time = 100f, Value = 1.25f, Weight = 1f },
-
-                                                new Action() { Time = 140f, Value = 4.44f, Weight = 0.95f },
-                                                    new Action() { Time = 200f, Value = 4.44f, Weight = 1f },
-                                                        new Action() { Time = 230f, Value = 0.56f, Weight = 1f },
-                                                            new Action() { Time = 260f, Value = 4.49f, Weight = 1f },
-
-                                                new Action() { Time = 300f, Value = 2f, Weight = 1f },
-                                                    new Action() { Time = 360f, Value = 0.56f, Weight = 1f },
-                                                        new Action() { Time = 390f, Value = 1.25f, Weight = 1f },
-
-                                               
-                                               }
-             },
-
-              { "_SeparateWeight", new List<Action> {  new Action() { Time = 0f, Value = 0.43f, Weight =0.5f },
-                                                    new Action() { Time = 30f, Value = 0.089f, Weight = 1f },
-                                                        new Action() { Time = 60f, Value = 0.303f, Weight = 1f },
-                                                            new Action() { Time = 100f, Value = 0.17f, Weight = 1f },
-
-                                                    new Action() { Time = 140f, Value = 0.32f, Weight = 0.95f },
-                                                        new Action() { Time = 200f, Value = 0.32f, Weight = 1f },
-                                                            new Action() { Time = 230f, Value = 0.089f, Weight = 1f },
-                                                                new Action() { Time = 260f, Value = 0.32f, Weight = 1f },
-
-                                                    new Action() { Time = 300f, Value = 0.102f, Weight = 1f },
-                                                        new Action() { Time = 360f, Value = 0.89f, Weight = 1f },
-                                                            new Action() { Time = 390f, Value = 0.17f, Weight = 1f },
-
-                                                    
-                                               }
-             },
-
-              { "_AlignmentRadius", new List<Action> {  new Action() { Time = 0f, Value = 2f, Weight = 0.5f },
-                                                    new Action() { Time = 30f, Value = 2.81f, Weight = 1f },
-                                                        new Action() { Time = 60f, Value = 3.57f, Weight = 1f },
-                                                            new Action() { Time = 100f, Value = 1.75f, Weight = 1f },
-
-                                                    new Action() { Time = 140f, Value = 1.82f, Weight = 0.95f },
-                                                        new Action() { Time = 200f, Value = 3.29f, Weight = 1f },
-                                                            new Action() { Time = 230f, Value = 2.81f, Weight = 1f },
-                                                                new Action() { Time = 260f, Value = 1.88f, Weight = 1f },
-
-                                                    new Action() { Time = 300f, Value = 4.03f, Weight = 1f },
-                                                        new Action() { Time = 360f, Value = 2.18f, Weight = 1f },
-                                                            new Action() { Time = 390f, Value = 1.75f, Weight = 1f },
-
-                                                    
-                                               }
-             },
-
-              { "_AlignmentWeight", new List<Action> {  new Action() { Time = 0f, Value = 0.3f, Weight = 0.5f },
-                                                    new Action() { Time = 30f, Value = 0.635f, Weight = 1f },
-                                                        new Action() { Time = 60f, Value = 0.382f, Weight = 1f },
-                                                            new Action() { Time = 100f, Value = 0.382f, Weight = 1f },
-
-                                                    new Action() { Time = 140f, Value = 0.117f, Weight = 0.95f },
-                                                        new Action() { Time = 200f, Value = 0.646f, Weight = 1f },
-                                                            new Action() { Time = 230f, Value = 0.635f, Weight = 1f },
-                                                                new Action() { Time = 260f, Value = 0.893f, Weight = 1f },
-
-                                                    new Action() { Time = 300f, Value = 0.82f, Weight = 1f },
-                                                        new Action() { Time = 360f, Value = 0.635f, Weight = 1f },
-                                                            new Action() { Time = 390f, Value = 0.382f, Weight = 1f },
-
-                                                    
-                                               }
-             },
-
-              { "_CohesionRadius", new List<Action> {  new Action() { Time = 0f, Value = 0.2f, Weight = 0.5f },
-                                                    new Action() { Time = 30f, Value = 1.15f, Weight = 1f },
-                                                        new Action() { Time = 60f, Value = 1.21f, Weight = 1f },
-                                                            new Action() { Time = 100f, Value = 0.17f, Weight = 1f },
-
-                                                    new Action() { Time = 140f, Value = 2.95f, Weight = 0.95f },
-                                                        new Action() { Time = 200f, Value = 2.95f, Weight = 1f },
-                                                            new Action() { Time = 230f, Value = 1.15f, Weight = 1f },
-                                                                new Action() { Time = 260f, Value = 1.15f, Weight = 1f },
-
-                                                    new Action() { Time = 300f, Value = 2f, Weight = 1f },
-                                                        new Action() { Time = 360f, Value = 1.15f, Weight = 1f },
-                                                            new Action() { Time = 390f, Value = 0.17f, Weight = 1f },
-
-                                                   
-                                               }
-             },
-
-              { "_CohesionWeight", new List<Action> {
-
-                  new Action() { Time = 0f, Value = 0.2f, Weight = 0.5f },
-                    new Action() { Time = 30f, Value = 0.022f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.41f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.18f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.438f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.438f, Weight = 1f },
-                        new Action() { Time = 23f, Value = 0.022f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 0.713f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.2f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.022f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 0.18f, Weight = 1f },
-
-                
-                                               }
-             },
-
-
-
-            //
-            { "_GroundFlockingWeight", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.3f, Weight = 0.5f },
-                    new Action() { Time = 30f, Value = 0.59f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 1.43f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 1.43f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.2f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 1.94f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 0.59f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1.82f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.3f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.59f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 1.43f, Weight = 1f },
-
-                
-                                               }
-             },
-
-            { "_GroundDivergeWeight", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.2f, Weight = 0.5f },
-                    new Action() { Time = 30f, Value = 0.53f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.59f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.59f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.3f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.73f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 0.089f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 0.185f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.73f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.089f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 0.59f, Weight = 1f },
-
-                
-                                               }
-             },
-
-            { "_GroundCirculationWeight", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.5f, Weight = 0.5f },
-                    new Action() { Time = 30f, Value = 0.269f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.342f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.342f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.5f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.376f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 0.269f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 0.376f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.15f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.269f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 0.342f, Weight = 1f },
-
-                
-                                               }
-             },
-
-
-            { "_CeilingFlockingWeight", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.2f, Weight = 0.5f },
-                    new Action() { Time = 30f, Value = 3.42f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 4.89f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 4.89f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.2f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 3.9f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1.29f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 3.09f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.2f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 1.29f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 4.89f, Weight = 1f },
-
-                
-                                               }
-             },
-
-            { "_CeilingConvergeWeight", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.3f, Weight = 0.5f },
-                    new Action() { Time = 30f, Value = 0.53f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.578f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.578f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.3f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.663f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 0.337f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 0.112f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.3f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.337f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 0.578f, Weight = 1f },
-
-                
-                                               }
-             },
-
-            { "_CeilingCirculationWeight", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.5f, Weight = 0.5f },
-                    new Action() { Time = 30f, Value = 0.157f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.342f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.179f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.5f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.146f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 0.157f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 157f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.5f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.157f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 0.179f, Weight = 1f },
-
-                
-                                               }
-             },
-
-
-
-            { "_RightWallFlockingWeight", new List<Action> {  new Action() { Time = 0f, Value = 0.1f, Weight = 1f },
-                                                              new Action() { Time = 390f, Value = 0.1f, Weight = 0f }
-                                               }
-             },
-
-            { "_RightWallUpMoveWeight", new List<Action> {  new Action() { Time = 0f, Value = 0.9f, Weight = 1f },
-                                                            new Action() { Time = 390f, Value = 0.9f, Weight = 0f }
-                                               }
-             },
-
-
-
-
-            //
-            { "_GroundMinHue", new List<Action> {
-
-                new Action() { Time = 0f, Value = 1f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 1f, Weight = 1f },
-                        new Action() { Time = 60f, Value = -0.04f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.16f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.64f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.47f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 0.47f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 0.47f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = -0.3f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.88f, Weight = 1f },
-                        new Action() { Time = 390f, Value = -0.3f, Weight = 1f },
-
-               
-                                               }
-             },
-
-            { "_GroundMaxHue", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.74f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 0.74f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.37f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.3f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.54f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.65f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.17f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 1300f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 1300f, Weight = 1f },
-
-                
-                                               }
-             },
-
-            { "_GroundMinSaturation", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 0f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 1f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.85f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.2f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 0f, Weight = 1f },
-
-                
-                                               }
-             },
-
-            { "_GroundMaxSaturation", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.78f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 0.78f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.78f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.78f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.1f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.1f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.84f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.78f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 0.78f, Weight = 1f },
-
-               
-                                               }
-             },
-
-            { "_GroundMinValue", new List<Action> {
-
-                new Action() { Time = 0f, Value = 1f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 1f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 1f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 1f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.81f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.81f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.7f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 1f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 1f, Weight = 1f },
-
-               
-                                               }
-             },
-
-            { "_GroundMaxValue", new List<Action> {
-
-                new Action() { Time = 0f, Value = 1f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 1f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 1f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 1f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 1f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 1f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 1f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 1f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 1f, Weight = 1f },
-
-                
-                                               }
-             },
-
-        { "_GroundMinAlpha", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.2f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 0.2f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.2f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.2f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.34f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.34f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.2f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.2f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 0.2f, Weight = 1f },
-
-                
-                                               }
-             },
-
-            { "_GroundMaxAlpha", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.88f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 0.88f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.88f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.88f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.9f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.9f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.44f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.88f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 0.88f, Weight = 1f },
-
-                
-                                               }
-             },
-
-
-
-
-
-
-
-
-            //
-            { "_CeilingMinHue", new List<Action> {
-
-                new Action() { Time = 0f, Value = -0.1f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 0.77f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.58f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.91f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.07f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.07f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.88f, Weight = 1f },
-                    new Action() { Time = 360f, Value = -0.3f, Weight = 1f },
-                        new Action() { Time = 390f, Value = -0.3f, Weight = 1f },
-
-                
-                                               }
-             },
-
-            { "_CeilingMaxHue", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.15f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 0.62f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.36f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.59f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.16f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.16f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 1f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 1300f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 1300f, Weight = 1f },
-
-                
-                                               }
-             },
-
-            { "_CeilingMinSaturation", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.2f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 0.2f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.2f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.2f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.2f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.2f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.2f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 0.2f, Weight = 1f },
-
-               
-                                               }
-             },
-
-            { "_CeilingMaxSaturation", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.84f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 0.84f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.84f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.84f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 1f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 1f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.78f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.84f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 0.84f, Weight = 1f },
-
-                
-                                               }
-             },
-
-            { "_CeilingMinValue", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.29f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 0.29f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.29f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.29f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.2f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.2f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 1f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.29f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 0.29f, Weight = 1f },
-
-                
-                                               }
-             },
-
-            { "_CeilingMaxValue", new List<Action> {
-
-                new Action() { Time = 0f, Value = 1f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 1f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 1f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 1f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 1f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 1f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 2690f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 1f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 1f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 1f, Weight = 1f },
-
-               
-                                               }
-             },
-
-        { "_CeilingMinAlpha", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.2f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 0.2f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.2f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.2f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.2f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.2f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.2f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.2f, Weight = 1f },
-                        new Action() { Time =390f, Value = 0.2f, Weight = 1f },
-
-                
-                                               }
-             },
-
-            { "_CeilingMaxAlpha", new List<Action> {
-
-                new Action() { Time = 0f, Value = 0.81f, Weight = 0.95f },
-                    new Action() { Time = 30f, Value = 0.81f, Weight = 1f },
-                        new Action() { Time = 60f, Value = 0.81f, Weight = 1f },
-                            new Action() { Time = 100f, Value = 0.81f, Weight = 1f },
-
-                new Action() { Time = 140f, Value = 0.6f, Weight = 0.95f },
-                    new Action() { Time = 200f, Value = 0.6f, Weight = 1f },
-                        new Action() { Time = 230f, Value = 1300f, Weight = 1f },
-                            new Action() { Time = 260f, Value = 1300f, Weight = 1f },
-
-                new Action() { Time = 300f, Value = 0.88f, Weight = 1f },
-                    new Action() { Time = 360f, Value = 0.81f, Weight = 1f },
-                        new Action() { Time = 390f, Value = 0.81f, Weight = 1f },
-
-                
-                                               }
-             },
-
-
-
-
-
-
-
-        }; //    actionPlan = new Dictionary<String, List<Action> >  ()
-
 
 
     // Use this for initialization
@@ -833,6 +138,7 @@ public class SimpleBoidLEDColors : MonoBehaviour
         Debug.Log("################################");
         Debug.Log("I am in Start()");
         Debug.Log("################################");
+
         m_SceneStartTime = Time.time; // set the current time in millisecond
 
         InitializeValues();
@@ -841,158 +147,29 @@ public class SimpleBoidLEDColors : MonoBehaviour
 
     // Update is called once per frame
     private void Update() {
-        Simulate();
-    }
-
-    private void OnDestroy()
-    {
-        if (BoidBuffer == null) return;
-        BoidBuffer.Release();
-        BoidBuffer = null;
+        SampleBoidLEDColors();
     }
 
     void OnValidate() // called before the start() 
     {
 
-        if (!IsBoidsNumSet) return; // IsBoidsNumSet is set to true in Start()
-
-          
-        Debug.Log("MyComponent::OnValidate()");
-
-        Assert.IsTrue( m_BoidsNum <  MAX_SIZE_OF_BUFFER, "Assertion failed :( :(" );
-
-        if ( m_BoidsNum < BoidsNumPrev) // the current boids less than the previous
-        {
-            //add random boids to the at the of the buffer
-            BufferEndIndex = (int) m_BoidsNum;
-            BoidsNumPrev =(int) m_BoidsNum; 
-        }
-
-        else
-        if ( m_BoidsNum > BoidsNumPrev)
-
-        {  //add random boids to the at the of the buffer
-
-            float  numOfBoidsToAdd = m_BoidsNum - BoidsNumPrev;
-
-            SetBoidArray(BufferEndIndex, (int) numOfBoidsToAdd);
-
-            BufferEndIndex = (int) m_BoidsNum;
-            BoidsNumPrev = (int) m_BoidsNum;
-
-            BoidBuffer.SetData(boidArray); // buffer is R or RW
-
-        }
-
- 
 
     } // OnValidate()
 
 //public static Color HSVToRGB(float H, float S, float V);
 protected void InitializeValues()
     {
-        // 컴퓨트 쉐이더에 값을 전달
-        IsBoidsNumSet = true;
-
-        BoidsNumPrev = (int) m_BoidsNum;
-     
+        
         BufferEndIndex = (int) m_BoidsNum;
 
 
-        BoidComputeShader.SetInt("_BoidsNum", (int) m_BoidsNum);
-        BoidComputeShader.SetInt("_NumOfWalls", numOfWalls);
+        BoidLEDComputeShader.SetInt("_BoidsNum", (int) m_BoidsNum);
 
+        KernelIdLEDColor = BoidLEDComputeShader.FindKernel("SampleLEDColors");
 
-        //BoidComputeShader.SetFloat("_Mass", _mass);
-
-
-
-
-        BoidComputeShader.SetFloat("_SeparateRadius", _separate.Radius);
-        BoidComputeShader.SetFloat("_SeparateWeight", _separate.Weight);
-        BoidComputeShader.SetFloat("_AlignmentRadius", _alignment.Radius);
-        BoidComputeShader.SetFloat("_AlignmentWeight", _alignment.Weight);
-        BoidComputeShader.SetFloat("_CohesionRadius", _cohesion.Radius);
-        BoidComputeShader.SetFloat("_CohesionWeight", _cohesion.Weight);
-
-
-        BoidComputeShader.SetFloat("_MinSpeed", _minSpeed);
-        BoidComputeShader.SetFloat("_MaxSpeed", _maxSpeed);
-
-        BoidComputeShader.SetFloat("_SpeedFactor", _speedFactor);
-        BoidComputeShader.SetFloat("_ScaleFactor", _scaleFactor);
-
-        BoidComputeShader.SetFloat("_GroundFlockingWeight", _groundWeight.FlockingWeight);
-        BoidComputeShader.SetFloat("_GroundDivergeWeight", _groundWeight.DivergeWeight);
-        BoidComputeShader.SetFloat("_GroundCirculationWeight", _groundWeight.CirculationWeight);
-
-        BoidComputeShader.SetFloat("_CeilingFlockingWeight", _ceilingWeight.FlockingWeight);
-        BoidComputeShader.SetFloat("_CeilingConvergeWeight", _ceilingWeight.ConvergeWeight);
-        BoidComputeShader.SetFloat("_CeilingCirculationWeight", _ceilingWeight.CirculationWeight);
-
-
-
-        BoidComputeShader.SetFloat("_GroundMinHue", _groundMinHue);
-        BoidComputeShader.SetFloat("_GroundMaxHue", _groundMaxHue);
-        BoidComputeShader.SetFloat("_GroundMinSaturation", _groundMinSaturation);
-        BoidComputeShader.SetFloat("_GroundMaxSaturation", _groundMaxSaturation);
-        BoidComputeShader.SetFloat("_GroundMinValue", _groundMinValue);
-        BoidComputeShader.SetFloat("_GroundMaxValue", _groundMaxValue);
-
-        BoidComputeShader.SetFloat("_GroundMinAlpha", _groundMinAlpha);
-        BoidComputeShader.SetFloat("_GroundMaxAlpha", _groundMaxAlpha);
-
-
-
-        BoidComputeShader.SetFloat("_CeilingMinHue", _ceilingMinHue);
-        BoidComputeShader.SetFloat("_CeilingMaxHue", _ceilingMaxHue);
-        BoidComputeShader.SetFloat("_CeilingMinSaturation", _ceilingMinSaturation);
-        BoidComputeShader.SetFloat("_CeilingMaxSaturation", _ceilingMaxSaturation);
-        BoidComputeShader.SetFloat("_CeilingMinValue", _ceilingMinValue);
-        BoidComputeShader.SetFloat("_CeilingMaxValue", _ceilingMaxValue);
-
-        BoidComputeShader.SetFloat("_CeilingMinAlpha", _ceilingMinAlpha);
-        BoidComputeShader.SetFloat("_CeilingMaxAlpha", _ceilingMaxAlpha);
-
-
-        //BoidComputeShader.SetFloat("_RightWallMinHue", _rightWallMinHue);
-        //BoidComputeShader.SetFloat("_RightWallMaxHue", _rightWallMaxHue);
-        //BoidComputeShader.SetFloat("_RightWallMinSaturation", _rightWallMinSaturation);
-        //BoidComputeShader.SetFloat("_RightWallMaxSaturation", _rightWallMaxSaturation);
-        //BoidComputeShader.SetFloat("_RightWallMinValue", _rightWallMinValue);
-        //BoidComputeShader.SetFloat("_RightWallMaxValue", _rightWallMaxValue);
-
-        //BoidComputeShader.SetFloat("_RightWallMinAlpha", _rightWallMinAlpha);
-        //BoidComputeShader.SetFloat("_RightWallMaxAlpha", _rightWallMaxAlpha);
-
-
-
-        BoidComputeShader.SetVector("_GroundMaxCorner", GroundMaxCorner);
-        BoidComputeShader.SetVector("_GroundMinCorner", GroundMinCorner);
-
-
-        BoidComputeShader.SetVector("_CeilingMaxCorner", CeilingMaxCorner);
-        BoidComputeShader.SetVector("_CeilingMinCorner", CeilingMinCorner);
-
-
-
-        BoidComputeShader.SetFloat("_GroundPlaneDepth", GroundPlaneDepth);
-        BoidComputeShader.SetFloat("_CeilingPlaneDepth", CeilingPlaneDepth);
-
-        //BoidComputeShader.SetVector("_RightWallMaxCorner", RightWallMaxCorner);
-        //BoidComputeShader.SetVector("_RightWallMinCorner", RightWallMinCorner);
-
-
-
-        BoidComputeShader.SetFloat("_GroundRadius", GroundRadius);
-        BoidComputeShader.SetFloat("_CeilinRadius", CeilingRadius);
-
-        BoidComputeShader.SetFloat("_CeilingInnerRadius", CeilingInnerRadius);
-
-        KernelIdGround = BoidComputeShader.FindKernel("SimulateCSGround");
-        KernelIdCeiling = BoidComputeShader.FindKernel("SimulateCSCeiling");
-
-        KernelIdCountBoids = BoidComputeShader.FindKernel("SimulateCSCountBoids");
+        BoidLEDComputeShader.SetBuffer(KernelIdLEDColor, "_BoidBuffer", _boids.BoidBuffer);
+       
+       
     } //nitializeValues()
 
 
