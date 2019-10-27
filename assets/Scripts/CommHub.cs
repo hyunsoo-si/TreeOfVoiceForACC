@@ -71,11 +71,15 @@ public class CommHub : MonoBehaviour
 {
 
     
-    ActionPlanController m_actionPlanController;
+    public ActionPlanController m_actionPlanController;
+
+   // public SimpleBoidsTreeOfVoice m_boidsController;
+
     ActionPlanUpdateController m_actionPlanUpdateController;
 
-    SimpleBoidsTreeOfVoice m_boidsController;
-    BoidsRendererTreeOfVoice m_boidsRenderer;
+  
+
+   // public BoidsRendererTreeOfVoice m_boidsRenderer;
 
     DictManager m_dictManager;
 
@@ -88,9 +92,9 @@ public class CommHub : MonoBehaviour
     LEDMasterController m_ledMasterController;
     NeuroHeadSetController m_neuroHeadSetController;
 
-    public Dictionary<String, List<SimpleBoidsTreeOfVoice.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
+    Dictionary<String, List<SimpleBoidsTreeOfVoice.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
 
-    public List<GameObject>[] m_inputFieldContainer;
+    List<GameObject>[] m_inputFieldContainer;
     
 
 
@@ -116,10 +120,10 @@ public class CommHub : MonoBehaviour
         //NeuroHeadSetController m_neuroHeadSetController;
 
 
-        m_actionPlanController = gameObject.GetComponent<ActionPlanController>();
+        //m_actionPlanController = gameObject.GetComponent<ActionPlanController>();
         m_actionPlanUpdateController = gameObject.GetComponent<ActionPlanUpdateController>();
-        m_boidsController = gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
-        m_boidsRenderer = gameObject.GetComponent<BoidsRendererTreeOfVoice>();
+        //m_boidsController = gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
+       // m_boidsRenderer = gameObject.GetComponent<BoidsRendererTreeOfVoice>();
 
         m_dictManager = gameObject.GetComponent<DictManager>();
         m_ledColorGenController = gameObject.GetComponent<LEDColorGenController>(); // compute Shader use
