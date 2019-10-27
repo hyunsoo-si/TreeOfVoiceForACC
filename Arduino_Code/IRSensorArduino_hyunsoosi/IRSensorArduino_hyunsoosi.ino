@@ -70,13 +70,13 @@ void loop() {
 //Serial.print(",");
 //Serial.print(signaltounity[1]);
 //Serial.println(" ");
-  Serial.print("Distance (1): ");
+//  Serial.print("Distance (1): ");
   Serial.print(average1);
-  Serial.println("cm");
+ // Serial.println("cm");
   
-  Serial.print("Distance (2): ");
+//  Serial.print("Distance (2): ");
  Serial.print(average2);
- Serial.println("cm");
+// Serial.println("cm");
      // Sharp IR code for Robojax.com
      
 }

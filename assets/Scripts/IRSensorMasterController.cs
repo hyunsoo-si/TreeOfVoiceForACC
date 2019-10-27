@@ -10,35 +10,18 @@ using System.IO.Ports;
 
 public class IRSensorMasterController : MonoBehaviour
 {
-
     // Setup events for sending LED data to m_LEDMasterController
 
     public delegate void OnAverageSignalReceived (int[] avgDistances);
     public event OnAverageSignalReceived onAverageSignalReceived;
 
-    //////////////////////////////////
-    //
-    // Private Variable
-    //
-    //////////////////////////////////
-    /// <summary>
-    /// 
-    public string m_portName = "COM0"; // should be specified in the inspector
+    public string m_portName = "COM8"; 
+    public const int m_IRDistanceBytesCount = 4; 
+
     SerialPort m_serialPort;
 
-        public byte[] m_IRDistanceBytes; // 4 bytes for two distances
+    public byte[] m_IRDistanceBytes; // 4 bytes for two distances
     float m_Delay;
-    public const int m_IRDistanceBytesCount = 4; // 
-
-    //////////////////////////////////
-    //
-    // Function
-    //
-    //////////////////////////////////
-
-  
-
-    
 
     void Start()
     {
@@ -50,37 +33,43 @@ public class IRSensorMasterController : MonoBehaviour
         //This takes a second or so, and during that time any data that you send is lost.
         //https://forum.arduino.cc/index.php?topic=459847.0
 
-
         // Set up the serial Port
+        //Before of Play in Unity, close Serial Monitor in Arduino IDE
+        //Either insert a delay between closing the port and trying to open it again, or catch the exception and try again.   Actually, do both.
+        //Or open it once and close it when you close your program.
 
-        m_serialPort = new SerialPort(m_portName, 115200); // bit rate= 567000 bps
+        m_serialPort = new SerialPort(m_portName, 9600); // bit rate= 567000 bps
 
+        //m_serialPort.DiscardInBuffer();
+        //m_serialPort.DiscardOutBuffer();
+        //m_serialPort.Close();
+
+        //delay(10);
 
         //m_SerialPort.ReadTimeout = 50;
-        m_serialPort.ReadTimeout = 1000;  // sets the timeout value before reporting error
-                                          //  m_SerialPort1.WriteTimeout = 5000??
-        m_serialPort.Open();
+        //m_serialPort.ReadTimeout = 1000;  // sets the timeout value before reporting error
+        //  m_SerialPort1.WriteTimeout = 5000??
 
+        //if (!m_serialPort.IsOpen )
+        //{
+        // m_serialPort.Open();
+       // }
 
         //m_SerialToArduinoMgr = new SerialToArduinoMgr();
-
         //m_SerialToArduinoMgr.Setup();
-
         //var port = m_SerialToArduinoMgr.port;
-
-
-
-
 
         // Deletage SerialDataReceivedEventHandler is a "pointer" to a method
         // It refers to the code itself, not the value of evaluating the code
         //  public event SerialDataReceivedEventHandler DataReceived; in  SerialPort
         //namespace System.IO.Ports
-        //        {
         //[MonitoringDescription("SerialPortDesc")]
         //public class SerialPort : Component
 
         m_serialPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
+        Debug.Log(m_IRDistanceBytes);
+        Debug.Log("hihihihiih");
+
 
         //m_SerialPort.DataReceived += DataReceivedHandler; ???
         //Delegates can hold references only to methods defined with a method signature that exactly matches the signature of the delegate.
@@ -179,9 +168,10 @@ public class IRSensorMasterController : MonoBehaviour
     }
 
 
+
     void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
     {
-
+      
         SerialPort port = (SerialPort)sender;
 
         //byte[] temp = new byte[port.ReadBufferSize];
@@ -257,14 +247,19 @@ public class IRSensorMasterController : MonoBehaviour
 
         int numBytesRead = 0;
         int numBytesToRead = m_IRDistanceBytes.Length;
-
+        Debug.Log("Ddddddddddssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssdddddd     "   + port);
         do
         {
             // Read may return anything from 0 to numBytesToRead.
             int n = port.Read(m_IRDistanceBytes, numBytesRead, numBytesToRead);
+            Debug.Log("ddddddd   :" +   n);
             numBytesRead += n;
             numBytesToRead -= n;
+            Debug.Log(numBytesRead);
+            Debug.Log(numBytesToRead);
+            Debug.Log(m_IRDistanceBytes);
         } while (numBytesToRead > 0);
+
 
         //port.Close();
 

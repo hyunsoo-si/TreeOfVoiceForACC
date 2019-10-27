@@ -9,6 +9,8 @@ public class LEDColorGenController : MonoBehaviour
 {
     // Areas of LED lights and person
 
+
+
     public float personDepth = 1; // 1m
     public float personWidth = 0.5f; // m
 

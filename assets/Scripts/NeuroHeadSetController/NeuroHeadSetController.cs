@@ -54,7 +54,8 @@ public class NeuroHeadSetController : MonoBehaviour
    
     public string m_fileToWriteEEG = "EEGLog.txt";
 
-    public string m_portName = "COM0"; // should be specified in the inspector
+    public string m_portName = "COM8"; // should be specified in the inspector// for debugging
+
     SerialPort m_serialPort; 
 
     StreamWriter sw;
@@ -82,11 +83,13 @@ public class NeuroHeadSetController : MonoBehaviour
 
         m_electrodeData = new double[8];
 
+        m_portName = "COM8";
+
         m_serialPort = new SerialPort(m_portName, 115200); // bit rate= 567000 bps
 
 
         //m_SerialPort.ReadTimeout = 50;
-        m_serialPort.ReadTimeout = 1000;  // sets the timeout value before reporting error
+        //m_serialPort.ReadTimeout = 1000;  // sets the timeout value before reporting error
                                           //  m_SerialPort1.WriteTimeout = 5000??
         m_serialPort.Open();
 

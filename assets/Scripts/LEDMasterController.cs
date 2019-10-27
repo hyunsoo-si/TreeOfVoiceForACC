@@ -17,7 +17,7 @@ public class LEDMasterController : MonoBehaviour
     //
     //////////////////////////////////
     /// <summary>
-    public string m_portName = "COM0"; // should be specified in the inspector
+    public string m_portName = "COM8"; // should be specified in the inspector
     SerialPort m_serialPort;
 
 

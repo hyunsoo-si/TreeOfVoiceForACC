@@ -71,7 +71,7 @@ public class CommHub : MonoBehaviour
 {
 
     
-    public ActionPlanController m_actionPlanController;
+    public ActionPlanController m_actionPlanController; // set in the inspector
 
    // public SimpleBoidsTreeOfVoice m_boidsController;
 
@@ -121,14 +121,26 @@ public class CommHub : MonoBehaviour
 
 
         //m_actionPlanController = gameObject.GetComponent<ActionPlanController>();
+
+
+        // When the component is attached to objects other than the current gameObject to which the current component is attached
+        //GameManager gameManager;
+
+        //void Awake()
+        //{
+        //    gameManager = GameObject.Find("ManagerObj").GetComponent<GameManager>();
+        //}
         m_actionPlanUpdateController = gameObject.GetComponent<ActionPlanUpdateController>();
+
         //m_boidsController = gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
        // m_boidsRenderer = gameObject.GetComponent<BoidsRendererTreeOfVoice>();
 
-        m_dictManager = gameObject.GetComponent<DictManager>();
+        // For Debugging by Moon
+       // m_dictManager = gameObject.GetComponent<DictManager>(); // DictManager should be added to CommHub
+
         m_ledColorGenController = gameObject.GetComponent<LEDColorGenController>(); // compute Shader use
 
-        m_pointerEventsController = gameObject.GetComponent<PointerEventsController>();
+        m_pointerEventsController = gameObject.GetComponent<PointerEventsController>(); //PointerEventsController component should be added to CommHub object
     
 
         // this  gets the reference  to the instance of  class PointerEventsController
@@ -136,14 +148,21 @@ public class CommHub : MonoBehaviour
         // The gameboject will has the reference to that instance.
 
         m_irSensorMasterController = gameObject.GetComponent<IRSensorMasterController>();
-        m_ledMasterController = gameObject.GetComponent<LEDMasterController>();
-        m_neuroHeadSetController = gameObject.GetComponent<NeuroHeadSetController>();
-       
-     
+        Debug.Log(m_irSensorMasterController);
+        Debug.Log("hihi");
 
-       
+        // For Debugging
 
-       
+        //  m_ledMasterController = gameObject.GetComponent<LEDMasterController>();
+
+        //for debugging
+        // m_neuroHeadSetController = gameObject.GetComponent<NeuroHeadSetController>();
+
+
+
+
+
+
 
 
         //In Start(): call actionPlanController.InitActionPlan
@@ -186,27 +205,36 @@ public class CommHub : MonoBehaviour
         //two right mouse clicks merge or split the fields based on the position of the mouse within the field
 
         // inputField.onEndEdit += actionPlanController.ChangeActionValues ==> This will be done within actionPlanController.initActionPlan
-        m_neuroHeadSetController.onAverageSignalReceived += m_ledColorGenController.UpdateLEDResponseParameter;
+        
+        // fOR DEBUGGING
+        //m_neuroHeadSetController.onAverageSignalReceived += m_ledColorGenController.UpdateLEDResponseParameter;
+        
         m_irSensorMasterController.onAverageSignalReceived += m_ledColorGenController.UpdateColorBrightnessParameter;
 
         //In Update call  m_boidsController.SampleColorsAtLEDPoints
         //In Update call ledMasterController.SendLEDData
         
-         m_actionPlanController.loadButton.onClick.AddListener(m_dictManager.LoadActionPlan ) ;
 
-         m_actionPlanController.saveButton.onClick.AddListener( m_dictManager.SaveActionPlan) ;
+        // for debugging by Moon
+        // m_actionPlanController.loadButton.onClick.AddListener(m_dictManager.LoadActionPlan ) ;
 
+       //  m_actionPlanController.saveButton.onClick.AddListener( m_dictManager.SaveActionPlan) ;
 
-        m_ledColorGenController = gameObject.GetComponent<LEDColorGenController>();
+        // For debugging
+
+        //m_ledColorGenController = gameObject.GetComponent<LEDColorGenController>();
+       
         //It is assumed that all the necessary components are already attached to CommHub gameObject, which  is referred to by
         // gameObject field variable. gameObject.GetComponent<LEDColorGenController>() == this.gameObject.GetComponent<LEDColorGenController>();
-        if (m_ledColorGenController == null)
-        {
-            Debug.LogError("The global Variable  m_ledColorGenController is not  defined");
-            Application.Quit();
-        }
+        //if (m_ledColorGenController == null)
+        //{
+        //    Debug.LogError("The global Variable  m_ledColorGenController is not  defined");
+        //    Application.Quit();
+        //}
 
-        m_ledColorGenController.m_ledSenderHandler += m_ledMasterController.UpdateLEDArray;
+        // for debugging
+
+        //m_ledColorGenController.m_ledSenderHandler += m_ledMasterController.UpdateLEDArray;
 
 
         // Define Event Handlers for InputField Event          

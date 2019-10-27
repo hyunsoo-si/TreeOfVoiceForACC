@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.4465782, g: 0.49641252, b: 0.5748167, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -555,8 +555,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 468306996}
   m_HandleRect: {fileID: 468306995}
   m_Direction: 0
-  m_Value: -0.0000017951517
-  m_Size: 0.915
+  m_Value: 0.0000008975766
+  m_Size: 0.9150001
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1434,7 +1434,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 69723808}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.6100001
+  m_Size: 0.61
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1941,9 +1941,6 @@ GameObject:
   - component: {fileID: 1304115014}
   - component: {fileID: 1304115013}
   - component: {fileID: 1304115020}
-  - component: {fileID: 1304115017}
-  - component: {fileID: 1304115016}
-  - component: {fileID: 1304115015}
   m_Layer: 0
   m_Name: CommHub
   m_TagString: Untagged
@@ -1978,52 +1975,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 50
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1304115015
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1304115012}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7450f8168ffa4164ea570b20045388d9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1304115016
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1304115012}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2dcacd5c70b1f93469a13bcf17c74a93, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  personDepth: 1
-  personWidth: 0.5
-  innerCircleRadius: 1
-  outerCircleRadius: 2
-  m_totalNumOfLeds: 32
-  m_BoidsNum: 0
-  BoidLEDComputeShader: {fileID: 0}
-  m_boidComponent: {fileID: 0}
---- !u!114 &1304115017
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1304115012}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5e7eb7bb9c79c34d941f17933021942, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_portName: COM8
-  m_IRDistanceBytes: 
 --- !u!114 &1304115020
 MonoBehaviour:
   m_ObjectHideFlags: 0
